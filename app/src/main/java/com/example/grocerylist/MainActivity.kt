@@ -4,17 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.grocerylist.ui.theme.MyApplicationTheme
@@ -28,7 +23,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    GroceryListApp()
+                    ReactiveScreen()
                 }
             }
         }
@@ -36,94 +31,56 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun GroceryListApp() {
-    // ---- 1. STATE ----
-    var newItem by remember { mutableStateOf("") }
-    val groceries = remember { mutableStateListOf<String>() }
+fun ReactiveScreen() {
+    // 1. Add state for name and count using rememberSaveable to survive configuration changes
+    var count by rememberSaveable { mutableIntStateOf(0) }
+    var name by rememberSaveable { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // 2. Greeting (READS 'name')
         Text(
-            text = "My Grocery List",
-            style = MaterialTheme.typography.headlineMedium
+            text = if (name.isBlank()) "Hello, stranger!" else "Hello, $name!",
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-        // ---- 2. INPUT + ADD EVENT ----
-        val addItemAction = {
-            if (newItem.isNotBlank()) {
-                groceries.add(newItem.trim())
-                newItem = "" // Clear the input field
-            }
-        }
+        // 3. Text field (WRITES 'name')
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Enter your name") }
+        )
+        Spacer(Modifier.height(32.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = newItem,
-                onValueChange = { newItem = it },
-                label = { Text("Enter an item") },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { addItemAction() }),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                )
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = addItemAction,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Text("Add")
-            }
-        }
+        // 4. State Hoisted Counter
+        CounterControls(
+            count = count,
+            onIncrement = { count++ },
+            onDecrement = { count-- },
+            onReset = { count = 0 }
+        )
+    }
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // ---- LIVE ITEM COUNT ----
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Total items: ${groceries.size}",
-                style = MaterialTheme.typography.bodyLarge
-            )
-
-            if (groceries.isNotEmpty()) {
-                TextButton(onClick = { groceries.clear() }) {
-                    Text("Clear All")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // ---- 3. LIST + DELETE EVENT ----
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(groceries) { item ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = item, fontSize = 18.sp)
-                    IconButton(onClick = { groceries.remove(item) }) {
-                        Icon(Icons.Filled.Delete, contentDescription = "Delete $item")
-                    }
-                }
-            }
+@Composable
+fun CounterControls(
+    count: Int,                 // Value flows DOWN
+    onIncrement: () -> Unit,    // Events flow UP
+    onDecrement: () -> Unit,
+    onReset: () -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = "Count: $count", fontSize = 24.sp)
+        Spacer(Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(onClick = onDecrement) { Text("–") }
+            Button(onClick = onReset) { Text("Reset") }
+            Button(onClick = onIncrement) { Text("+") }
         }
     }
 }
