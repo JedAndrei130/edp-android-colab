@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myapplication"
+    namespace = "com.liceo.account"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "com.liceo.account"
         minSdk = 32
         targetSdk = 35
         versionCode = 1
@@ -54,4 +54,8 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
