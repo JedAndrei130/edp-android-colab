@@ -7,12 +7,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,12 +25,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.liceo.account.domain.model.User
+import java.time.LocalDate
+import java.time.Period
+
+fun calculateAge(birthdateStr: String): String {
+    if (birthdateStr.isBlank()) return "Not specified"
+    return try {
+        val parts = birthdateStr.trim().split("-", "/")
+        if (parts.size >= 3) {
+            val birthYear = parts[0].toIntOrNull() ?: return "Not specified"
+            val birthMonth = parts[1].toIntOrNull() ?: 1
+            val birthDay = parts[2].toIntOrNull() ?: 1
+
+            val today = LocalDate.now()
+            val birthDate = LocalDate.of(birthYear, birthMonth, birthDay)
+            val age = Period.between(birthDate, today).years
+
+            if (age >= 0) "$age years old" else "Not specified"
+        } else {
+            "Not specified"
+        }
+    } catch (_: Exception) {
+        "Not specified"
+    }
+}
 
 @Composable
 fun ProfileScreen(
     user: User,
     onLogout: () -> Unit
 ) {
+    val computedAge = calculateAge(user.birthdate)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -156,6 +183,12 @@ fun ProfileScreen(
                         icon = Icons.Default.Cake,
                         label = "Birthdate",
                         value = user.birthdate
+                    )
+
+                    ProfileDetailRow(
+                        icon = Icons.Default.CalendarMonth,
+                        label = "Age",
+                        value = computedAge
                     )
 
                     ProfileDetailRow(
